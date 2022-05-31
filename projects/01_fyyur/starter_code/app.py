@@ -13,7 +13,7 @@ from logging import Formatter, FileHandler
 from flask_wtf import Form
 from forms import *
 from dateutil.parser import *
-
+from flask_migrate import Migrate
 
 #----------------------------------------------------------------------------#
 # App Config.
@@ -27,6 +27,8 @@ db = SQLAlchemy(app)
 # TODO: connect to a local postgresql database
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:collins1844@localhost:5432/mydatabase'
 
+
+migrate = Migrate(app, db)
 
 #----------------------------------------------------------------------------#
 # Models.
