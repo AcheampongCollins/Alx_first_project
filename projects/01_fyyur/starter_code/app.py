@@ -3,7 +3,7 @@
 #----------------------------------------------------------------------------#
 
 import json
-import dateutil.parser
+# import dateutil.parser
 import babel
 from flask import Flask, render_template, request, Response, flash, redirect, url_for
 from flask_moment import Moment
@@ -12,6 +12,9 @@ import logging
 from logging import Formatter, FileHandler
 from flask_wtf import Form
 from forms import *
+from dateutil.parser import *
+
+
 #----------------------------------------------------------------------------#
 # App Config.
 #----------------------------------------------------------------------------#
@@ -22,6 +25,8 @@ app.config.from_object('config')
 db = SQLAlchemy(app)
 
 # TODO: connect to a local postgresql database
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:collins1844@localhost:5432/mydatabase'
+
 
 #----------------------------------------------------------------------------#
 # Models.
@@ -62,7 +67,7 @@ class Artist(db.Model):
 #----------------------------------------------------------------------------#
 
 def format_datetime(value, format='medium'):
-  date = dateutil.parser.parse(value)
+  date = parse(value)
   if format == 'full':
       format="EEEE MMMM, d, y 'at' h:mma"
   elif format == 'medium':
