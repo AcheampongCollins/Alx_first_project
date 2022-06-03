@@ -49,7 +49,8 @@ class Venue(db.Model):
     website_link = db.Column(db.String(120))
     seeking_talent = db.Column(db.Boolean, nullable=False, default=False)
     seeking_description = db.Column(db.String(120))
-    
+    artists = db.relationship('Artist', secondary='shows')
+    shows =db.relationship('show', backref=('venues'))
 class Artist(db.Model):
     __tablename__ = 'Artist'
 
@@ -65,10 +66,9 @@ class Artist(db.Model):
     website_link = db.Column(db.String(120))
     seeking_venue = db.Column(db.Boolean, nullable=False, default=False)
     seeking_description = db.Column(db.String(120))
-
-
-# TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
-
+    # TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
+    venues = db.relationship('Venue', secondary='shows')
+    shows =db.relationship('show', backref=('venues'))
 #----------------------------------------------------------------------------#
 # Filters.
 #----------------------------------------------------------------------------#
@@ -97,7 +97,9 @@ def index():
 
 @app.route('/venues')
 def venues():
+  venues = Venue.query.order_by(Venue.state,Venue.city).all()
   # TODO: replace with real venues data.
+
   #       num_upcoming_shows should be aggregated based on number of upcoming shows per venue.
   data=[{
     "city": "San Francisco",
