@@ -248,10 +248,19 @@ def create_venue_submission():
 def delete_venue(venue_id):
   # TODO: Complete this endpoint for taking a venue_id, and using
   # SQLAlchemy ORM to delete a record. Handle cases where the session commit could fail.
-
+  venue= Venue.query.get(venue_id)
+  db.session.delete(venue)
+  db.session.commit()
   # BONUS CHALLENGE: Implement a button to delete a Venue on a Venue Page, have it so that
   # clicking that button delete it from the db then redirect the user to the homepage
-  return None
+@app.route('/delete-venue', methods=['POST'])
+def delete_venue():
+  venueId =  request.get_json()['venue_id']
+  venue = Venue.query.get(venueId)
+  db.session.delete(venue)
+  db.session.commit()
+  return redirect(url_for('/home'))
+
 
 #  Artists
 #  ----------------------------------------------------------------
@@ -436,20 +445,8 @@ def create_artist_submission():
 def shows():
   # displays list of shows at /shows
   # TODO: replace with real venues data.
-  # shows = Show.query.all()
-
-  data = []
-  for show in shows:
-    data.append({
-            'venue_id': show.venue.id,
-            'venue_name': show.venue.name,
-            'artist_id': show.artist.id,
-            'artist_name': show.artist.name,
-            'artist_image_link': show.artist.image_link,
-            'start_time': show.start_time.isoformat()
-        })
-
-  return render_template('pages/shows.html', shows=data)
+  shows = Show.query.all()
+  return render_template('pages/shows.html', shows=shows)
 
 @app.route('/shows/create')
 def create_shows():
@@ -459,28 +456,27 @@ def create_shows():
 
 @app.route('/shows/create', methods=['POST'])
 def create_show_submission():
-  pass
   # called to create new shows in the db, upon submitting new show listing form
   # TODO: insert form data as a new Show record in the db, instead
-  # error = False
-  # try:
+  error = False
+  try:
 
-  #   show = Show()
-  #   show.artist_id = request.form['artist_id']
-  #   show.venue_id = request.form['venue_id']
-  #   show.start_time = request.form['start_time']
-  #   db.session.add(show)
-  #   db.session.commit()
-  # except:
-  #   error = True
-  #   db.session.rollback()
-  # finally:
-  #   db.session.close()
-  #   if error:
-  #    flash('An error occurred. Show could not be listed.')
-  #   else:
-  #    flash('Show was successfully listed!')
-  #   return render_template('pages/home.html')
+    show = Show()
+    show.artist_id = request.form['artist_id']
+    show.venue_id = request.form['venue_id']
+    show.start_time = request.form['start_time']
+    db.session.add(show)
+    db.session.commit()
+  except:
+    error = True
+    db.session.rollback()
+  finally:
+    db.session.close()
+    if error:
+     flash('An error occurred. Show could not be listed.')
+    else:
+     flash('Show was successfully listed!')
+    return render_template('pages/home.html')
 
 
 @app.errorhandler(404)
