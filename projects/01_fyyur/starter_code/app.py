@@ -49,8 +49,9 @@ class Venue(db.Model):
     website_link = db.Column(db.String(120))
     seeking_talent = db.Column(db.Boolean, nullable=False, default=False)
     seeking_description = db.Column(db.String(120))
+
     artists = db.relationship('Artist', secondary='shows')
-    shows =db.relationship('show', backref=('venues'))
+    shows = db.relationship('Show', backref=('venues'))
 class Artist(db.Model):
     __tablename__ = 'Artist'
 
@@ -66,9 +67,24 @@ class Artist(db.Model):
     website_link = db.Column(db.String(120))
     seeking_venue = db.Column(db.Boolean, nullable=False, default=False)
     seeking_description = db.Column(db.String(120))
-    # TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
+
     venues = db.relationship('Venue', secondary='shows')
-    shows =db.relationship('show', backref=('venues'))
+    shows = db.relationship('Show', backref=('artists'))
+    # TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
+    
+class Show(db.Model):
+    __tablename__ = 'shows'
+
+    id = db.Column(db.Integer, primary_key=True)
+    artist_id = db.Column(db.Integer, db.ForeignKey(
+        'Artist.id'), nullable=False)
+    venue_id = db.Column(db.Integer, db.ForeignKey(
+        'Venue.id'), nullable=False)
+    start_time = db.Column(db.DateTime, nullable=False)
+
+    venue = db.relationship('Venue' , lazy=True)
+    artist = db.relationship('Artist' , lazy=True)
+
 #----------------------------------------------------------------------------#
 # Filters.
 #----------------------------------------------------------------------------#
@@ -420,7 +436,7 @@ def create_artist_submission():
 def shows():
   # displays list of shows at /shows
   # TODO: replace with real venues data.
-  shows = Show.query.all()
+  # shows = Show.query.all()
 
   data = []
   for show in shows:
@@ -443,27 +459,28 @@ def create_shows():
 
 @app.route('/shows/create', methods=['POST'])
 def create_show_submission():
+  pass
   # called to create new shows in the db, upon submitting new show listing form
   # TODO: insert form data as a new Show record in the db, instead
-  error = False
-  try:
+  # error = False
+  # try:
 
-    show = Show()
-    show.artist_id = request.form['artist_id']
-    show.venue_id = request.form['venue_id']
-    show.start_time = request.form['start_time']
-    db.session.add(show)
-    db.session.commit()
-  except:
-    error = True
-    db.session.rollback()
-  finally:
-    db.session.close()
-    if error:
-     flash('An error occurred. Show could not be listed.')
-    else:
-     flash('Show was successfully listed!')
-    return render_template('pages/home.html')
+  #   show = Show()
+  #   show.artist_id = request.form['artist_id']
+  #   show.venue_id = request.form['venue_id']
+  #   show.start_time = request.form['start_time']
+  #   db.session.add(show)
+  #   db.session.commit()
+  # except:
+  #   error = True
+  #   db.session.rollback()
+  # finally:
+  #   db.session.close()
+  #   if error:
+  #    flash('An error occurred. Show could not be listed.')
+  #   else:
+  #    flash('Show was successfully listed!')
+  #   return render_template('pages/home.html')
 
 
 @app.errorhandler(404)
