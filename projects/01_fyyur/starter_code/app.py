@@ -253,8 +253,10 @@ def delete_venue(venue_id):
   db.session.commit()
   # BONUS CHALLENGE: Implement a button to delete a Venue on a Venue Page, have it so that
   # clicking that button delete it from the db then redirect the user to the homepage
+
+
 @app.route('/delete-venue', methods=['POST'])
-def delete_venue():
+def deletevenue():
   venueId =  request.get_json()['venue_id']
   venue = Venue.query.get(venueId)
   db.session.delete(venue)
