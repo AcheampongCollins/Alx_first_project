@@ -120,8 +120,8 @@ def venues():
     venues = Venue.query.order_by(Venue.state,Venue.city).all()
     data = []
     tmp = {}
-    prevcity = None
-    prevstate = None
+    city = None
+    state = None
     for venue in venues:
        venuedata = {
             'id': venue.id,
@@ -151,21 +151,20 @@ def search_venues():
   # seach for Hop should return "The Musical Hop".
   # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
   search_term = request.form.get('search_term')
-  venues = Venue.query.filter(
-      Venue.name.islike('%{}%'.format(search_term))).all()
+  venues = Venue.query.filter(Venue.name.islike('%{}%'.format(search_term))).all()
 
-  venue_list = []
+  _list = []
   for venue in venues:
     venue_data = {
       'id' : venue.id,
       'name': venue.name,
       'num_upcoming_shows' : len(venue.shows)
     }
-  venue_list.append(venue_data)
+  _list.append(venue_data)
 
   data = {
-    "count":len(venue_list),
-    "data": venue_list
+    "count":len(_list),
+    "data": _list
     }
    
 
@@ -179,22 +178,23 @@ def show_venue(venue_id):
    # TODO: replace with real venue data from the venues table, using venue_id
    # shows the venue page with the given venue_id
     venue = Venue.query.get(venue_id)
+    
+    upcoming_venue_shows = filter(lambda x: x.start_time >= datetime.today(), venue.shows)
+    upcoming_shows = [upcoming_venue_shows]
 
-    upcoming_shows = list(filter(lambda x: x.start_time >=
-                                 datetime.today(), venue.shows))
-    past_shows = list(filter(lambda x: x.start_time <
-                             datetime.today(), venue.shows))
+    past_venue_shows = filter(lambda x: x.start_time < datetime.today(), venue.shows)
+    past_shows = [past_venue_shows]
    
 
-    past_shows = list(map(lambda x: x.show_artist(), past_shows))
-    upcoming_shows = list(map(lambda x: x.show_artist(), upcoming_shows))
+    past_shows = [map(lambda x: x.show_artist(), past_shows)]
+    upcoming_shows = [map(lambda x: x.show_artist(), upcoming_shows)]
 
-    data = venue.to_dict()
-    data['upcoming_shows'] = upcoming_shows
-    data['past_shows'] = past_shows
-    data['past_shows_count'] = len(past_shows)
-    data['upcoming_shows_count'] = len(upcoming_shows)
-
+    data = {
+    'upcoming_shows' : upcoming_shows,
+    'past_shows' : past_shows,
+    'past_shows_count' : len(past_shows),
+    'upcoming_shows_count' : len(upcoming_shows)
+    }
     return render_template('pages/show_venue.html', venue=data)
 
  
@@ -292,12 +292,14 @@ def search_artists():
   search_results = Artist.query.filter(
         Artist.name.like('%{}%'.format(search_term))).all()  
 
-  response = {}
-  response['count'] = len(search_results)
-  response['data'] = search_results
+  data = {
+     'count' : len(search_results),
+    'data' : search_results
+  }
+  
 
   return render_template('pages/search_artists.html',
-                           results=response,
+                           results=data,
                            search_term=request.form.get('search_term', ''))
  
 
@@ -306,19 +308,21 @@ def show_artist(artist_id):
   # shows the artist page with the given artist_id
   # TODO: replace with real artist data from the artist table, using artist_id
   artist = Artist.query.get(artist_id)
+  past_shows_filter = filter(lambda x: x.start_date < datetime.today(), artist.shows)
+  past_shows =[past_shows_filter]
+ 
+  upcoming_shows_filter = filter(lambda x: x.start_time >= datetime.today(), artist.shows)
+  upcoming_shows = [upcoming_shows_filter]
+ 
+  past_shows = [map(lambda x: x.show_venue(), past_shows)]
+  upcoming_shows = [map(lambda x: x.show_venue(), upcoming_shows)] 
 
-  past_shows = list(filter(lambda x: x.start_time <
-                             datetime.today(), artist.shows))  #Anoymouse function that filters past shows
-  upcoming_shows = list(filter(lambda x: x.start_time >=
-                                 datetime.today(), artist.shows))
+  data = {
+      'past_shows_count' : len(past_shows),
+  'upcoming_shows' : upcoming_shows,
+  'upcoming_shows_count' : len(upcoming_shows)
+  }
 
-  past_shows = list(map(lambda x: x.show_venue(), past_shows))
-  upcoming_shows = list(map(lambda x: x.show_venue(), upcoming_shows))  #Anoymouse function that filters upcoming shows
-
-  data = artist.to_dict()
-  data['past_shows_count'] = len(past_shows)
-  data['upcoming_shows'] = upcoming_shows
-  data['upcoming_shows_count'] = len(upcoming_shows)
   return render_template('pages/show_artist.html', artist=data)
 
  
@@ -420,21 +424,25 @@ def create_artist_submission():
   form = ArtistForm()
   error = False
   try:
+    _genres = request.form.getlist('genres')
     seeking_venue = False
     if 'seeking_venue' in request.form:
        seeking_venue = request.form['seeking_venue'] == 'y'
 
-    artist = Artist()
-    artist.name = request.form.get('name')
-    artist.city = request.form.get('city')
-    artist.state = request.form.get('state')
-    artist.phone = request.form.get('phone')
-    artist.genres = ','.join(request.form.getlist('genres'))
-    artist.website_link = request.form.get('website')
-    artist.image_link = request.form.get('image_link')
-    artist.facebook_link = request.form.get('facebook_link')
-    artist.seeking_venue = seeking_venue
-    artist.seeking_description = request.form.get('seeking_description')
+    artist = {
+    'name' : request.form.get('name'),
+     'city' : request.form.get('city'),
+     'state' :request.form.get('state'),
+     'address' : request.form.get('address'),
+     'phone' : request.form.get('phone'),
+     'genres' : ','.join(_genres),
+     'facebook_link' : request.form.get('facebook_link'),
+     'image_link' : request.form.get('image_link'),
+     'website_link' : request.form.get('website_link'),
+     'facebook_link' : request.form.get('facebook_link'),
+     'seeking_venue' : seeking_venue,
+    'seeking_description' : request.form.get('seeking_description')
+    }
     db.session.add(artist)
     db.session.commit()
   except:
@@ -478,14 +486,16 @@ def create_show_submission():
   error = False
   try:
 
-    show = Show()
-    show.artist_id = request.form['artist_id']
-    show.venue_id = request.form['venue_id']
-    show.start_time = request.form['start_time']
+    show = {
+    'artist_id' : request.form['artist_id'],
+    'venue_id' : request.form['venue_id'],
+    'start_time' : request.form['start_time']
+    }
     db.session.add(show)
     db.session.commit()
   except:
     error = True
+    print(sys.exc_info())
     db.session.rollback()
   finally:
     db.session.close()
