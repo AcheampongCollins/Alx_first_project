@@ -156,20 +156,21 @@ def search_venues():
 
   venue_list = []
   for venue in venues:
-    dic = {}
-    dic['id'] = venue.id
-    dic['name'] = venue.name
-    dic['num_upcoming_shows'] = len(venue.shows)
-    venue_list.append(dic)
+    venue_data = {
+      'id' : venue.id,
+      'name': venue.name,
+      'num_upcoming_shows' : len(venue.shows)
+    }
+  venue_list.append(venue_data)
 
-    response = {
+  data = {
     "count":len(venue_list),
     "data": venue_list
     }
    
 
-    return render_template('pages/search_venues.html',
-                           results=response,
+  return render_template('pages/search_venues.html',
+                           results=data,
                            search_term=request.form.get('search_term', ''))
 
 
@@ -213,23 +214,24 @@ def create_venue_submission():
   # TODO: modify data to be the data object returned from db insertion
    error = False
    try:
+    _genres = request.form.getlist('genres')
     seeking_talent = False
     if 'seeking_talent' in request.form:
        seeking_talent = request.form['seeking_talent'] == 'y'
-    venue = Venue()
-    venue.name = request.form.get('name')
-    venue.city = request.form.get('city')
-    venue.state = request.form.get('state')
-    venue.address = request.form.get('address')
-    venue.phone = request.form.get('phone')
-    tmp_genres = request.form.getlist('genres')
-    venue.genres = ','.join(tmp_genres)
-    venue.facebook_link = request.form.get('facebook_link')
-    venue.image_link = request.form.get('image_link')
-    venue.website_link = request.form.get('website_link')
-    venue.facebook_link = request.form.get('facebook_link')
-    venue.seeking_talent = seeking_talent
-    venue.seeking_description = request.form.get('seeking_description')
+    venue = {
+    'name' : request.form.get('name'),
+     'city' : request.form.get('city'),
+     'state' :request.form.get('state'),
+     'address' : request.form.get('address'),
+     'phone' : request.form.get('phone'),
+     'genres' : ','.join(_genres),
+     'facebook_link' : request.form.get('facebook_link'),
+     'image_link' : request.form.get('image_link'),
+     'website_link' : request.form.get('website_link'),
+     'facebook_link' : request.form.get('facebook_link'),
+     'seeking_talent' : seeking_talent,
+      'seeking_description' : request.form.get('seeking_description')
+    }
     db.session.add(venue)
     db.session.commit()
    except:
