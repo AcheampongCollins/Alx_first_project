@@ -186,8 +186,8 @@ def show_venue(venue_id):
     past_shows = [past_venue_shows]
    
 
-    past_shows = [map(lambda x: x.show_artist(), past_shows)]
-    upcoming_shows = [map(lambda x: x.show_artist(), upcoming_shows)]
+    past_shows = list(map(lambda x: x.show_artist(), past_shows))
+    upcoming_shows = list(map(lambda x: x.show_artist(), upcoming_shows))
 
     data = {
     'upcoming_shows' : upcoming_shows,
@@ -314,7 +314,7 @@ def show_artist(artist_id):
   upcoming_shows_filter = filter(lambda x: x.start_time >= datetime.today(), artist.shows)
   upcoming_shows = [upcoming_shows_filter]
  
-  past_shows = [map(lambda x: x.show_venue(), past_shows)]
+  past_shows = list(map(lambda x: x.show_venue(), past_shows))
   upcoming_shows = [map(lambda x: x.show_venue(), upcoming_shows)] 
 
   data = {
