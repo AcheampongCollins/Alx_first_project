@@ -4,6 +4,7 @@
 
 import json
 # import dateutil.parser
+import sys
 import babel
 from flask import Flask, render_template, request, Response, flash, redirect, url_for
 from flask_moment import Moment
@@ -51,7 +52,8 @@ class Venue(db.Model):
     seeking_description = db.Column(db.String(120))
 
     artists = db.relationship('Artist', secondary='shows')
-    shows = db.relationship('Show', backref=('venues'))
+    shows = db.relationship('Show', backref='venues')
+    
 class Artist(db.Model):
     __tablename__ = 'Artist'
 
@@ -69,7 +71,7 @@ class Artist(db.Model):
     seeking_description = db.Column(db.String(120))
 
     venues = db.relationship('Venue', secondary='shows')
-    shows = db.relationship('Show', backref=('artists'))
+    shows = db.relationship('Show', backref='artists')
     # TODO Implement Show and Artist models, and complete all model relationships and properties, as a database migration.
     
 class Show(db.Model):
@@ -150,19 +152,21 @@ def search_venues():
   # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
   search_term = request.form.get('search_term')
   venues = Venue.query.filter(
-      Venue.name.ilike('%{}%'.format(search_term))).all()
+      Venue.name.islike('%{}%'.format(search_term))).all()
 
-  data = []
+  venue_list = []
   for venue in venues:
     dic = {}
     dic['id'] = venue.id
     dic['name'] = venue.name
     dic['num_upcoming_shows'] = len(venue.shows)
-    data.append(dic)
+    venue_list.append(dic)
 
-    response = {}
-    response['count'] = len(data)
-    response['data'] = data
+    response = {
+    "count":len(venue_list),
+    "data": venue_list
+    }
+   
 
     return render_template('pages/search_venues.html',
                            results=response,
@@ -209,25 +213,29 @@ def create_venue_submission():
   # TODO: modify data to be the data object returned from db insertion
    error = False
    try:
-      venue = Venue()
-      venue.name = request.form['name']
-      venue.city = request.form['city']
-      venue.state = request.form['state']
-      venue.address = request.form['address']
-      venue.phone = request.form['phone']
-      tmp_genres = request.form.getlist('genres')
-      venue.genres = ','.join(tmp_genres)
-      venue.facebook_link = request.form['facebook_link']
-      venue.image_link = request.form['image_link']
-      venue.website_link = request.form['website_link']
-      venue.facebook_link = request.form['facebook_link']
-      venue.seeking_talent = request.form['seeking_talent']
-      venue.seeking_description = request.form['seeking_description']
-      db.session.add(venue)
-      db.session.commit()
+    seeking_talent = False
+    if 'seeking_talent' in request.form:
+       seeking_talent = request.form['seeking_talent'] == 'y'
+    venue = Venue()
+    venue.name = request.form.get('name')
+    venue.city = request.form.get('city')
+    venue.state = request.form.get('state')
+    venue.address = request.form.get('address')
+    venue.phone = request.form.get('phone')
+    tmp_genres = request.form.getlist('genres')
+    venue.genres = ','.join(tmp_genres)
+    venue.facebook_link = request.form.get('facebook_link')
+    venue.image_link = request.form.get('image_link')
+    venue.website_link = request.form.get('website_link')
+    venue.facebook_link = request.form.get('facebook_link')
+    venue.seeking_talent = seeking_talent
+    venue.seeking_description = request.form.get('seeking_description')
+    db.session.add(venue)
+    db.session.commit()
    except:
-        error = True
-        db.session.rollback()
+     error = True
+     print(sys.exc_info())  
+     db.session.rollback()
    finally:
         db.session.close()
         if error:
@@ -410,21 +418,26 @@ def create_artist_submission():
   form = ArtistForm()
   error = False
   try:
+    seeking_venue = False
+    if 'seeking_venue' in request.form:
+       seeking_venue = request.form['seeking_venue'] == 'y'
+
     artist = Artist()
-    artist.name = request.form['name']
-    artist.city = request.form['city']
-    artist.state = request.form['state']
-    artist.phone = request.form['phone']
+    artist.name = request.form.get('name')
+    artist.city = request.form.get('city')
+    artist.state = request.form.get('state')
+    artist.phone = request.form.get('phone')
     artist.genres = ','.join(request.form.getlist('genres'))
-    artist.website_link = request.form['website']
-    artist.image_link = request.form['image_link']
-    artist.facebook_link = request.form['facebook_link']
-    artist.seeking_venue = request.form['seeking_venue']
-    artist.seeking_description = request.form['seeking_description']
+    artist.website_link = request.form.get('website')
+    artist.image_link = request.form.get('image_link')
+    artist.facebook_link = request.form.get('facebook_link')
+    artist.seeking_venue = seeking_venue
+    artist.seeking_description = request.form.get('seeking_description')
     db.session.add(artist)
     db.session.commit()
   except:
     error = True
+    print(sys.exc_info())  
     db.session.rollback()
        
   finally:
